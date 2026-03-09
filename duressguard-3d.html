@@ -1,0 +1,313 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>DuressGuard™ — 3D Interactive Demo</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;600;700&display=swap');
+:root{--teal:#00E5C0;--teal2:#00A886;--teal3:#004D3D;--gold:#FFB300;--red:#FF3D3D;--dark:#04080F;--navy:#080E1C;--card:#0C1525;--card2:#101D30;--gray:#3A5070;--lgray:#7A99B8;--white:#E0EDFF}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{background:var(--dark);color:var(--white);font-family:'Rajdhani',sans-serif;overflow-x:hidden}
+body::after{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.025) 2px,rgba(0,0,0,.025) 4px);pointer-events:none;z-index:8000}
+header{position:fixed;top:0;left:0;right:0;z-index:500;padding:16px 32px;display:flex;align-items:center;justify-content:space-between;background:linear-gradient(to bottom,rgba(4,8,15,.98),transparent)}
+.logo{display:flex;align-items:center;gap:10px;font-family:'Orbitron',monospace;font-weight:900;font-size:.95rem;letter-spacing:.15em}
+.logo-hex{width:28px;height:28px;background:var(--teal);clip-path:polygon(50% 0%,100% 25%,100% 75%,50% 100%,0% 75%,0% 25%);animation:hpulse 2.5s ease-in-out infinite}
+@keyframes hpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.7;transform:scale(.92)}}
+.logo span{color:var(--teal)}
+.nav-pill{font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:.2em;color:var(--teal);border:1px solid var(--teal3);padding:5px 14px;border-radius:20px;background:rgba(0,229,192,.04);animation:pglow 3s ease-in-out infinite alternate}
+@keyframes pglow{from{box-shadow:0 0 6px rgba(0,229,192,.15)}to{box-shadow:0 0 18px rgba(0,229,192,.45)}}
+#hero{position:relative;height:100vh;min-height:640px;display:flex;flex-direction:column;align-items:center;justify-content:center;overflow:hidden}
+#hero::before{content:'';position:absolute;inset:0;background-image:linear-gradient(rgba(0,229,192,.02) 1px,transparent 1px),linear-gradient(90deg,rgba(0,229,192,.02) 1px,transparent 1px);background-size:56px 56px;mask-image:radial-gradient(ellipse at center,black 30%,transparent 75%)}
+.hglow{position:absolute;width:520px;height:520px;background:radial-gradient(circle,rgba(0,229,192,.07) 0%,transparent 65%);top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;animation:gbreathe 4s ease-in-out infinite}
+@keyframes gbreathe{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.15)}}
+#canvas-wrap{position:absolute;inset:0;z-index:2}
+#c{width:100%;height:100%;display:block}
+.sweep{position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,transparent,var(--teal),transparent);opacity:.1;z-index:6;animation:sw 5s linear infinite}
+@keyframes sw{from{top:-3px}to{top:100%}}
+.hero-ov{position:relative;z-index:10;text-align:center;pointer-events:none;animation:rise 1.4s cubic-bezier(.16,1,.3,1) both}
+@keyframes rise{from{opacity:0;transform:translateY(50px)}to{opacity:1;transform:none}}
+.eyebrow{font-family:'Orbitron',monospace;font-size:.62rem;letter-spacing:.35em;color:var(--teal);text-transform:uppercase;margin-bottom:10px;animation:rise 1.4s .1s cubic-bezier(.16,1,.3,1) both}
+.htitle{font-family:'Orbitron',monospace;font-size:clamp(2.4rem,7vw,5.2rem);font-weight:900;line-height:.95;text-shadow:0 0 60px rgba(0,229,192,.25);animation:rise 1.4s .15s cubic-bezier(.16,1,.3,1) both}
+.htitle .ac{color:var(--teal)}
+.htag{font-size:clamp(.8rem,2vw,1rem);font-weight:300;color:var(--lgray);letter-spacing:.2em;text-transform:uppercase;margin-top:14px;animation:rise 1.4s .25s cubic-bezier(.16,1,.3,1) both}
+#sb{position:absolute;top:68px;left:50%;transform:translateX(-50%);z-index:20;font-family:'Orbitron',monospace;font-size:.52rem;letter-spacing:.18em;padding:5px 18px;border:1px solid var(--teal3);background:rgba(4,8,15,.8);backdrop-filter:blur(8px);color:var(--teal);text-transform:uppercase;border-radius:2px;transition:all .4s;pointer-events:none;white-space:nowrap}
+#sb.child{color:var(--gold);border-color:rgba(255,179,0,.4)}
+#sb.duress{color:var(--red);border-color:rgba(255,61,61,.5);animation:bst .5s step-end infinite}
+@keyframes bst{50%{opacity:0}}
+.hud{position:absolute;top:50%;transform:translateY(-50%);z-index:15;font-family:'Orbitron',monospace;font-size:.46rem;color:var(--gray);letter-spacing:.1em;line-height:1.9;pointer-events:none}
+.hud.l{left:20px;text-align:left}.hud.r{right:20px;text-align:right}
+.hud .v{color:var(--teal);font-weight:700}
+@media(max-width:700px){.hud{display:none}}
+#ctrl{position:absolute;bottom:32px;left:50%;transform:translateX(-50%);z-index:20;display:flex;gap:7px;flex-wrap:wrap;justify-content:center;animation:rise 1.4s .4s cubic-bezier(.16,1,.3,1) both}
+.btn{font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:.13em;padding:8px 18px;border-radius:3px;border:1px solid var(--gray);background:rgba(8,14,28,.75);color:var(--lgray);cursor:pointer;transition:all .2s;backdrop-filter:blur(10px);text-transform:uppercase;position:relative;overflow:hidden}
+.btn::after{content:'';position:absolute;left:0;bottom:0;right:0;height:2px;background:var(--teal);transform:scaleX(0);transform-origin:left;transition:transform .25s}
+.btn:hover,.btn.active{border-color:var(--teal);color:var(--teal);background:rgba(0,229,192,.06)}
+.btn:hover::after,.btn.active::after{transform:scaleX(1)}
+.btn-d{border-color:rgba(255,61,61,.35);color:rgba(255,100,100,.65)}
+.btn-d:hover,.btn-d.active{border-color:var(--red);color:var(--red);background:rgba(255,61,61,.07);box-shadow:0 0 18px rgba(255,61,61,.3)}
+.btn-d::after{background:var(--red)}
+#dfl{position:fixed;inset:0;background:rgba(255,61,61,.1);z-index:600;pointer-events:none;opacity:0;transition:opacity .15s}
+.wrap{max-width:1080px;margin:0 auto;padding:0 32px}
+.slbl{font-family:'Orbitron',monospace;font-size:.58rem;letter-spacing:.35em;color:var(--teal);text-transform:uppercase;margin-bottom:12px;display:flex;align-items:center;gap:10px}
+.slbl::before{content:'';width:28px;height:1px;background:var(--teal)}
+.sttl{font-family:'Orbitron',monospace;font-size:clamp(1.5rem,3.5vw,2.3rem);font-weight:900;line-height:1.15;margin-bottom:48px}
+#features{padding:90px 32px}
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:2px;margin-bottom:48px}
+.metric{background:var(--card);padding:22px 18px;border:1px solid rgba(0,229,192,.06);position:relative;overflow:hidden;transition:border-color .3s}
+.metric::after{content:'';position:absolute;bottom:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--teal),transparent);transform:scaleX(0);transform-origin:center;transition:transform .4s}
+.metric:hover{border-color:rgba(0,229,192,.22)}.metric:hover::after{transform:scaleX(1)}
+.mv{font-family:'Orbitron',monospace;font-size:clamp(1.7rem,3vw,2.5rem);font-weight:900;color:var(--teal);line-height:1;margin-bottom:6px}
+.ml{font-size:.75rem;color:var(--lgray);font-weight:600;line-height:1.3}.ms{font-size:.62rem;color:var(--gray);margin-top:3px}
+.fgrid{display:grid;grid-template-columns:1fr 1fr;gap:2px;margin-bottom:56px}
+@media(max-width:640px){.fgrid{grid-template-columns:1fr}}
+.fi{background:var(--card);border:1px solid rgba(255,255,255,.03);padding:22px;display:flex;gap:16px;position:relative;overflow:hidden;transition:background .3s,border-color .3s}
+.fi::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:var(--teal);transform:scaleY(0);transform-origin:bottom;transition:transform .3s}
+.fi:hover{background:var(--card2);border-color:rgba(0,229,192,.1)}.fi:hover::before{transform:scaleY(1)}
+.fico{font-size:1.4rem;flex-shrink:0;width:40px;height:40px;background:rgba(0,229,192,.07);display:flex;align-items:center;justify-content:center;border-radius:5px}
+.ftt{font-family:'Orbitron',monospace;font-size:.65rem;font-weight:700;color:var(--white);margin-bottom:5px;letter-spacing:.04em}
+.fds{font-size:.78rem;color:var(--lgray);line-height:1.5}
+#child{padding:80px 32px;background:linear-gradient(135deg,rgba(0,229,192,.02),rgba(255,179,0,.018));border-top:1px solid rgba(0,229,192,.07);border-bottom:1px solid rgba(0,229,192,.07)}
+#child .slbl{color:var(--gold)}#child .slbl::before{background:var(--gold)}
+.ccards{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px;margin-top:28px}
+.cc{background:rgba(8,14,28,.85);border:1px solid rgba(255,179,0,.09);border-radius:8px;padding:18px 14px;text-align:center;transition:border-color .3s,transform .3s}
+.cc:hover{border-color:rgba(255,179,0,.32);transform:translateY(-4px)}
+.cc .emo{font-size:1.9rem;margin-bottom:9px}
+.cc h4{font-family:'Orbitron',monospace;font-size:.58rem;font-weight:700;letter-spacing:.08em;color:var(--gold);margin-bottom:7px;text-transform:uppercase}
+.cc p{font-size:.72rem;color:var(--lgray);line-height:1.5}
+.tl{margin-top:36px;max-width:580px}
+.tli{display:flex;gap:18px;position:relative;margin-bottom:3px}
+.tli:not(:last-child)::before{content:'';position:absolute;left:40px;top:38px;bottom:-3px;width:1px;background:var(--gray)}
+.tlt{font-family:'Orbitron',monospace;font-size:.68rem;font-weight:700;width:48px;flex-shrink:0;padding-top:17px;text-align:center}
+.tldot{width:11px;height:11px;border-radius:50%;flex-shrink:0;margin-top:22px;position:relative;z-index:1}
+.tlb{background:var(--card);border:1px solid rgba(255,255,255,.04);padding:13px 16px;flex:1}
+.tlb strong{font-size:.8rem;font-weight:700;color:var(--white);display:block;margin-bottom:3px}
+.tlb span{font-size:.72rem;color:var(--lgray);line-height:1.4}
+#contact{padding:80px 32px;text-align:center;max-width:680px;margin:0 auto}
+.cml{display:inline-block;font-family:'Orbitron',monospace;font-size:clamp(.7rem,2vw,.9rem);color:var(--teal);border:1px solid var(--teal2);padding:13px 28px;margin:22px 0 10px;text-decoration:none;letter-spacing:.08em;transition:all .25s;position:relative;overflow:hidden}
+.cml::before{content:'';position:absolute;inset:0;background:var(--teal);transform:scaleX(0);transform-origin:left;transition:transform .3s;z-index:-1}
+.cml:hover{color:var(--dark)}.cml:hover::before{transform:scaleX(1)}
+.cmeta{font-size:.7rem;color:var(--gray);letter-spacing:.1em;text-transform:uppercase;line-height:2.1}
+.reveal{opacity:0;transform:translateY(26px);transition:opacity .7s,transform .7s}
+.reveal.in{opacity:1;transform:none}
+</style>
+</head>
+<body>
+<div id="dfl"></div>
+<header>
+  <div class="logo"><div class="logo-hex"></div>Duress<span>Guard</span>™</div>
+  <div class="nav-pill">PATENT FILED · 09.03.2026</div>
+</header>
+<section id="hero">
+  <div class="hglow"></div><div class="sweep"></div>
+  <div id="canvas-wrap"><canvas id="c"></canvas></div>
+  <div id="sb">● STANDBY — MONITORING ACTIVE</div>
+  <div class="hero-ov">
+    <p class="eyebrow">Autonomous Emergency Wearable</p>
+    <h1 class="htitle">Silent.<br><span class="ac">Invisible.</span><br>Unstoppable.</h1>
+    <p class="htag">Drag to rotate &nbsp;·&nbsp; Select mode below</p>
+  </div>
+  <div class="hud l">
+    <div>HR &nbsp;<span class="v" id="hr">72</span> bpm</div>
+    <div>SpO₂ <span class="v">98%</span></div>
+    <div>TEMP <span class="v">36.6°</span></div>
+    <div style="color:var(--teal3)">──────</div>
+    <div>GPS &nbsp;<span class="v">LOCKED</span></div>
+    <div>LTE &nbsp;<span class="v">●●●●</span></div>
+    <div>NFC &nbsp;<span class="v">READY</span></div>
+  </div>
+  <div class="hud r">
+    <div>BATT <span class="v">94%</span></div>
+    <div>14d &nbsp;<span class="v">LEFT</span></div>
+    <div style="color:var(--teal3)">──────</div>
+    <div>IMU &nbsp;<span class="v">200Hz</span></div>
+    <div>PPG &nbsp;<span class="v">100Hz</span></div>
+    <div>IR &nbsp;&nbsp;<span class="v">ARMED</span></div>
+  </div>
+  <div id="ctrl">
+    <button class="btn active"  onclick="setMode('idle',this)">Standby</button>
+    <button class="btn"         onclick="setMode('sos',this)">SOS Alert</button>
+    <button class="btn"         onclick="setMode('child',this)">Child Mode</button>
+    <button class="btn"         onclick="setMode('medical',this)">Medical NFC</button>
+    <button class="btn btn-d"   onclick="setMode('duress',this)">⚡ Duress Mode™</button>
+  </div>
+</section>
+<section id="features"><div class="wrap">
+  <p class="slbl reveal">Core Specifications</p>
+  <h2 class="sttl reveal">Built for the moments<br>phones can't reach.</h2>
+  <div class="metrics reveal">
+    <div class="metric"><div class="mv">14</div><div class="ml">Days battery</div><div class="ms">72h active</div></div>
+    <div class="metric"><div class="mv">≤5m</div><div class="ml">GPS accuracy</div><div class="ms">No phone needed</div></div>
+    <div class="metric"><div class="mv">6g</div><div class="ml">Duress trigger</div><div class="ms">3 impacts / 3–6s</div></div>
+    <div class="metric"><div class="mv">IP68</div><div class="ml">Waterproof</div><div class="ms">Titanium · ≤28g</div></div>
+    <div class="metric"><div class="mv">0</div><div class="ml">Visible alerts</div><div class="ms">Screen unchanged</div></div>
+    <div class="metric"><div class="mv">LTE</div><div class="ml">NB-IoT built-in</div><div class="ms">Zero phone dep.</div></div>
+  </div>
+  <div class="fgrid reveal">
+    <div class="fi"><div class="fico">🔇</div><div><div class="ftt">Duress Mode™ — Covert SOS</div><div class="fds">3 impacts ≥6g within 3–6s. Screen UNCHANGED. Silent LTE: GPS + 30-min biometrics + IR photo burst transmitted instantly.</div></div></div>
+    <div class="fi"><div class="fico">📡</div><div><div class="ftt">Fully Autonomous LTE</div><div class="fds">No smartphone. No WiFi. Transmits via LTE Cat-M1/NB-IoT with priority flag "DURESS/THREAT/ASSAULT" to emergency services.</div></div></div>
+    <div class="fi"><div class="fico">🏥</div><div><div class="ftt">NFC Medical Profile</div><div class="fds">Paramedics approach within 10m — full medical profile, allergies, blood type instantly. No unlocking required.</div></div></div>
+    <div class="fi"><div class="fico">📸</div><div><div class="ftt">IR Evidence Camera</div><div class="fds">940nm IR: 5–10 encrypted frames per event. Blockchain-sealed. Legally valid proof of location, time and biometrics.</div></div></div>
+    <div class="fi"><div class="fico">⏱</div><div><div class="ftt">30-min Biometric History</div><div class="fds">8MB flash: full PPG, SpO₂, temperature, accelerometer log. Transmitted with every SOS so medics see what happened before.</div></div></div>
+    <div class="fi"><div class="fico">🏔</div><div><div class="ftt">Auto-Detection Algorithm</div><div class="fds">Falls >6g + no motion >8s. HR &lt;40 or &gt;140. SpO₂ &lt;90%. Combined anomaly: ≥2 parameters trigger critical state.</div></div></div>
+  </div>
+</div></section>
+<section id="child"><div class="wrap">
+  <p class="slbl reveal">Child Safe Mode™</p>
+  <h2 class="sttl reveal">"Always know where your child is.<br>Even without a phone."</h2>
+  <div class="ccards reveal">
+    <div class="cc"><div class="emo">📵</div><h4>Phone banned</h4><p>No screen, no games. Pure safety device — approved for schools where phones are prohibited.</p></div>
+    <div class="cc"><div class="emo">⏰</div><h4>Late return</h4><p>Not home by set time AND not in safe zone → instant parent alert with last GPS coordinates.</p></div>
+    <div class="cc"><div class="emo">🗺</div><h4>Lost in crowd</h4><p>Geo-fence alert when child exits safe zone. GPS updates every 30 seconds while moving.</p></div>
+    <div class="cc"><div class="emo">📱</div><h4>No phone at all</h4><p>Lost it, broke it, forgot it — DuressGuard works 100% independently via built-in LTE.</p></div>
+    <div class="cc"><div class="emo">🏫</div><h4>NFC school gate</h4><p>Child taps reader at gate. Parent instantly receives: "✅ Ivan left school at 17:02".</p></div>
+    <div class="cc"><div class="emo">🔴</div><h4>Covert child SOS</h4><p>3 light taps on side. Zero display change. Parent notified with live GPS in under 2 seconds.</p></div>
+  </div>
+  <div class="tl reveal">
+    <div class="tli">
+      <div class="tlt" style="color:var(--teal)">17:00</div>
+      <div class="tldot" style="background:var(--teal);box-shadow:0 0 8px var(--teal)"></div>
+      <div class="tlb"><strong>School ends</strong><span>NFC gate tap. Parent: "✅ Ivan left school at 17:02". Expected home: 17:30.</span></div>
+    </div>
+    <div class="tli">
+      <div class="tlt" style="color:var(--gold)">17:30</div>
+      <div class="tldot" style="background:var(--gold);box-shadow:0 0 8px var(--gold)"></div>
+      <div class="tlb"><strong>NOT home, NOT in safe zone</strong><span>Alert: "⚠️ Ivan not home. Last location: Le Loy St." Quick actions: Call band · Share with police.</span></div>
+    </div>
+    <div class="tli">
+      <div class="tlt" style="color:var(--red)">17:32</div>
+      <div class="tldot" style="background:var(--red);box-shadow:0 0 8px var(--red);animation:rdot .5s ease-in-out infinite alternate"></div>
+      <div class="tlb"><strong>Child activates Covert SOS (3 taps)</strong><span>"🔴 SOS: Ivan — GPS: …" Auto-notify school + trusted contacts. Band screen UNCHANGED.</span></div>
+    </div>
+  </div>
+</div></section>
+<style>@keyframes rdot{to{box-shadow:0 0 16px var(--red);transform:scale(1.35)}}</style>
+<section id="contact">
+  <p class="slbl reveal" style="justify-content:center">Founder</p>
+  <h2 class="sttl reveal" style="font-size:clamp(1.3rem,3vw,1.9rem)">Tikhonovskii Aleksander Viktorovich</h2>
+  <p class="reveal" style="font-size:.85rem;color:var(--lgray)">DuressGuard™ · Autonomous Emergency Wearable</p>
+  <a href="mailto:tihonovskiy7979@gmail.com" class="cml reveal">tihonovskiy7979@gmail.com</a>
+  <div class="cmeta reveal">
+    <div>tor7979@gmail.com &nbsp;·&nbsp; tihonovskiy7979@yandex.com</div>
+    <div style="margin-top:14px;color:var(--teal);font-family:'Orbitron',monospace;font-size:.55rem;letter-spacing:.2em">CONFIDENTIAL — NDA REQUIRED</div>
+    <div style="margin-top:4px;font-size:.6rem">Patent Filed · Blockchain Registered · 09 March 2026</div>
+    <div style="margin-top:4px;font-size:.58rem">Author retains exclusive right to change jurisdiction, hub, or target market without altering IP ownership.</div>
+  </div>
+</section>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const canvas=document.getElementById('c');
+const renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:true});
+renderer.setPixelRatio(Math.min(devicePixelRatio,2));
+renderer.shadowMap.enabled=true;
+renderer.toneMapping=THREE.ACESFilmicToneMapping;
+renderer.toneMappingExposure=1.4;
+const scene=new THREE.Scene();
+const camera=new THREE.PerspectiveCamera(42,1,0.1,100);
+camera.position.set(0,.3,4.2);
+function resize(){const W=canvas.parentElement.clientWidth,H=canvas.parentElement.clientHeight;renderer.setSize(W,H);camera.aspect=W/H;camera.updateProjectionMatrix()}
+resize();window.addEventListener('resize',resize);
+scene.add(new THREE.AmbientLight(0x06101e,3));
+const kL=new THREE.DirectionalLight(0x00E5C0,5);kL.position.set(2,3,5);kL.castShadow=true;scene.add(kL);
+scene.add(Object.assign(new THREE.DirectionalLight(0x1a3060,2),{position:new THREE.Vector3(-4,1,-3)}));
+scene.add(Object.assign(new THREE.DirectionalLight(0xFFB300,1.2),{position:new THREE.Vector3(0,-3,-4)}));
+const pA=new THREE.PointLight(0x00E5C0,3,8);pA.position.set(0,2,2);scene.add(pA);
+const Ti=new THREE.MeshStandardMaterial({color:0x7a8fa0,metalness:.95,roughness:.15});
+const TiD=new THREE.MeshStandardMaterial({color:0x505f6e,metalness:.9,roughness:.25});
+const Scr=new THREE.MeshStandardMaterial({color:0x030810,metalness:0,roughness:.05,emissive:0x030810,emissiveIntensity:1});
+const Gls=new THREE.MeshStandardMaterial({color:0x001520,metalness:0,roughness:0,transparent:true,opacity:.82});
+const Bnd=new THREE.MeshStandardMaterial({color:0x0e1a2b,metalness:.02,roughness:.9});
+const watch=new THREE.Group();scene.add(watch);
+watch.add(new THREE.Mesh(new THREE.BoxGeometry(1.05,1.2,.3,3,3,3),Ti));
+[-0.48,0.48].forEach(x=>{const c=new THREE.Mesh(new THREE.CylinderGeometry(.085,.085,1.2,14),Ti);c.position.x=x;watch.add(c)});
+const bz=new THREE.Mesh(new THREE.BoxGeometry(.9,1.05,.04),TiD);bz.position.z=.165;watch.add(bz);
+const scr=new THREE.Mesh(new THREE.BoxGeometry(.78,.92,.018),Scr);scr.position.z=.185;watch.add(scr);
+const gl=new THREE.Mesh(new THREE.BoxGeometry(.78,.92,.012),Gls);gl.position.z=.196;watch.add(gl);
+const rM=new THREE.MeshStandardMaterial({color:0x00E5C0,emissive:0x00E5C0,emissiveIntensity:.12,transparent:true,opacity:.12});
+const ring=new THREE.Mesh(new THREE.TorusGeometry(.26,.022,8,48),rM);ring.position.z=.2;watch.add(ring);
+const hM=new THREE.MeshStandardMaterial({color:0x00E5C0,emissive:0x00E5C0,emissiveIntensity:0,transparent:true,opacity:0});
+const hex=new THREE.Mesh(new THREE.CylinderGeometry(.12,.12,.014,6),hM);hex.rotation.x=Math.PI/2;hex.position.z=.202;watch.add(hex);
+const dots=[];
+for(let i=0;i<3;i++){const m=new THREE.MeshStandardMaterial({color:0x00E5C0,emissive:0x00E5C0,emissiveIntensity:.5,transparent:true,opacity:.5});const d=new THREE.Mesh(new THREE.SphereGeometry(.024,8,8),m);d.position.set(-.065+i*.065,-.36,.2);dots.push(d);watch.add(d)}
+[.18,-.18].forEach(y=>{const b=new THREE.Mesh(new THREE.CylinderGeometry(.038,.038,.2,14),Ti);b.rotation.z=Math.PI/2;b.position.set(.575,y,0);watch.add(b)});
+const nb=new THREE.Mesh(new THREE.BoxGeometry(.32,.32,.008),TiD);nb.position.z=-.155;watch.add(nb);
+for(let i=-1;i<=1;i++){const l=new THREE.Mesh(new THREE.CylinderGeometry(.016,.016,.006,8),new THREE.MeshStandardMaterial({color:0x00E5C0,emissive:0x00E5C0,emissiveIntensity:.7}));l.rotation.x=Math.PI/2;l.position.set(i*.055,-.06,-.158);watch.add(l)}
+const bT=new THREE.Mesh(new THREE.BoxGeometry(.75,1.4,.24),Bnd);bT.position.set(0,1.28,-.03);bT.castShadow=true;watch.add(bT);
+for(let i=0;i<5;i++){const h=new THREE.Mesh(new THREE.CylinderGeometry(.022,.022,.26,8),new THREE.MeshStandardMaterial({color:0x040810}));h.rotation.x=Math.PI/2;h.position.set(0,.82+i*.13,-.03);watch.add(h)}
+const bB=new THREE.Mesh(new THREE.BoxGeometry(.75,1.15,.24),Bnd);bB.position.set(0,-1.15,-.03);watch.add(bB);
+const bkl=new THREE.Mesh(new THREE.BoxGeometry(.52,.14,.06),Ti);bkl.position.set(0,-1.7,-.03);watch.add(bkl);
+const bklB=new THREE.Mesh(new THREE.CylinderGeometry(.012,.012,.52,8),Ti);bklB.rotation.z=Math.PI/2;bklB.position.set(0,-1.7,-.03);watch.add(bklB);
+const NPART=200,pG=new THREE.BufferGeometry(),pArr=new Float32Array(NPART*3);
+for(let i=0;i<NPART*3;i++)pArr[i]=(Math.random()-.5)*14;
+pG.setAttribute('position',new THREE.BufferAttribute(pArr,3));
+const pMat=new THREE.PointsMaterial({color:0x00E5C0,size:.02,transparent:true,opacity:.25,sizeAttenuation:true});
+const pts=new THREE.Points(pG,pMat);scene.add(pts);
+let drag=false,px0=0,py0=0,vx=0,vy=0,rx=.2,ry=.4;
+canvas.addEventListener('mousedown',e=>{drag=true;px0=e.clientX;py0=e.clientY});
+canvas.addEventListener('touchstart',e=>{drag=true;px0=e.touches[0].clientX;py0=e.touches[0].clientY});
+window.addEventListener('mouseup',()=>drag=false);window.addEventListener('touchend',()=>drag=false);
+window.addEventListener('mousemove',e=>{if(drag){vy+=(e.clientX-px0)*.009;vx+=(e.clientY-py0)*.006;px0=e.clientX;py0=e.clientY}});
+window.addEventListener('touchmove',e=>{if(drag){vy+=(e.touches[0].clientX-px0)*.009;vx+=(e.touches[0].clientY-py0)*.006;px0=e.touches[0].clientX;py0=e.touches[0].clientY}});
+let mode='idle';
+const sb=document.getElementById('sb'),dfl=document.getElementById('dfl');
+window.setMode=function(m,btn){
+  mode=m;document.querySelectorAll('.btn').forEach(b=>b.classList.remove('active'));btn.classList.add('active');
+  dfl.style.opacity=0;sb.className=m==='duress'?'duress':m==='child'?'child':'';
+  const msgs={idle:'● STANDBY — MONITORING ACTIVE',sos:'● SOS TRANSMITTED — GPS LOCKED',child:'● CHILD MODE — GPS TRACKING — NFC READY',medical:'● MEDICAL NFC — PROFILE BROADCAST',duress:'⚡ DURESS MODE™ — SILENT SOS — SCREEN UNCHANGED'};
+  sb.textContent=msgs[m];
+  if(m==='duress'){let c=0;const iv=setInterval(()=>{dfl.style.opacity=(c++%2)?.12:0;if(c>12){clearInterval(iv);dfl.style.opacity=0}},170)}
+};
+const L=(a,b,t)=>a+(b-a)*t;
+const clk=new THREE.Clock();
+function animate(){
+  requestAnimationFrame(animate);
+  const dt=clk.getDelta(),t=clk.getElapsedTime();
+  rx+=vx;ry+=vy;vx*=.86;vy*=.86;
+  if(!drag){vy+=.0035;rx=L(rx,.18,.025)}
+  rx=Math.max(-.65,Math.min(.65,rx));
+  watch.rotation.x=rx;watch.rotation.y=ry;
+  watch.position.y=Math.sin(t*.55)*.07;
+  const sg=(mesh,c,ei,op)=>{if(!mesh)return;mesh.material.color.set(c);mesh.material.emissive.set(c);mesh.material.emissiveIntensity=L(mesh.material.emissiveIntensity,ei,.1);mesh.material.opacity=L(mesh.material.opacity,op,.1)};
+  if(mode==='idle'){
+    Scr.emissive.setHex(0x020810);Scr.emissiveIntensity=L(Scr.emissiveIntensity,.8,.05);
+    sg(ring,0x00E5C0,.12+Math.sin(t*1.1)*.06,.12+Math.sin(t*1.1)*.06);sg(hex,0x00E5C0,0,0);
+    dots.forEach((d,i)=>sg(d,0x00E5C0,.5+Math.sin(t*1.4+i)*.25,.5+Math.sin(t*1.4+i)*.25));
+    pMat.color.setHex(0x00E5C0);pA.color.setHex(0x00E5C0);pA.intensity=2.5+Math.sin(t*1.2)*.5;
+  }else if(mode==='sos'){
+    const bl=Math.abs(Math.sin(t*5));
+    Scr.emissive.setRGB(0,bl*.12,bl*.28);Scr.emissiveIntensity=1.2;
+    sg(ring,0x00E5C0,.9+bl*.6,.85+bl*.12);ring.scale.setScalar(1+bl*.06);
+    sg(hex,0x00E5C0,bl*.7,bl*.7);dots.forEach(d=>sg(d,0x00E5C0,bl,bl));
+    pMat.color.setHex(0x00E5C0);pA.color.setHex(0x00E5C0);pA.intensity=4+bl*3;
+  }else if(mode==='child'){
+    const p=.5+Math.sin(t*1.8)*.5;
+    Scr.emissive.setRGB(.06*p,.12*p,.04*p);
+    sg(ring,0xFFB300,.5+p*.5,.7+p*.2);ring.scale.setScalar(1+p*.04);
+    sg(hex,0xFFB300,.4+p*.4,.55+p*.2);
+    dots.forEach((d,i)=>{const v=Math.sin(t*2+i*1.3)>0?.85:.2;sg(d,0xFFB300,v,v)});
+    pMat.color.setHex(0xFFB300);pA.color.setHex(0xFFB300);pA.intensity=2.5+p*2;
+  }else if(mode==='medical'){
+    const br=.5+Math.sin(t*1.2)*.5;
+    Scr.emissive.setRGB(0,.08*br,.05*br);
+    sg(ring,0x00ffaa,.4+br*.3,.6+br*.2);sg(hex,0x00ffaa,br*.6,br*.6);
+    dots.forEach((d,i)=>{const v=.7+Math.sin(t+i)*.3;sg(d,0x00ffaa,v,v)});
+    pMat.color.setHex(0x00ffaa);pA.color.setHex(0x00ffaa);pA.intensity=3+br;
+  }else if(mode==='duress'){
+    const al=Math.abs(Math.sin(t*10));
+    Scr.emissive.setRGB(.02,.02,.03);Scr.emissiveIntensity=.9;// screen UNCHANGED — key feature
+    sg(ring,0xFF3D3D,al*1.8,al*.95);ring.scale.setScalar(1+al*.1);
+    sg(hex,0xFF3D3D,al*1.2,al);dots.forEach(d=>sg(d,0xFF3D3D,al,al));
+    watch.position.x=Math.sin(t*38)*.025*al;
+    pMat.color.setHex(0xFF3D3D);pA.color.setHex(0xFF2200);pA.intensity=5*al+1;
+  }
+  pts.rotation.y=t*.04;pts.rotation.x=t*.018;
+  kL.intensity=4.5+Math.sin(t*.8)*.5;
+  renderer.render(scene,camera);
+}
+animate();
+document.querySelectorAll('.reveal').forEach(el=>new IntersectionObserver(([e])=>{if(e.isIntersecting)e.target.classList.add('in')},{threshold:.1}).observe(el));
+setInterval(()=>{const e=document.getElementById('hr');if(e)e.textContent=68+Math.round(Math.random()*10)},2200);
+</script>
+</body>
+</html>
